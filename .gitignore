@@ -1,0 +1,7 @@
+.idea/
+target/
+coverage-report/
+*.iml
+*.orig
+generated-sources/
+*.gdsl
