@@ -1,9 +1,9 @@
 package com.alten.product_trial.product;
 
+import static com.alten.product_trial.product.factory.ProductFactory.CreationProductFactory;
+import static com.alten.product_trial.product.factory.ProductFactory.createProduct;
 import static com.alten.product_trial.product.factory.ProductFactory.createProductDto;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -11,86 +11,102 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.alten.product_trial.application.product.model.CreationProduct;
 import com.alten.product_trial.application.product.model.ProductDto;
 import com.alten.product_trial.application.product.service.ProductService;
 import com.alten.product_trial.application.product.usecase.ProductUseCase;
+import com.alten.product_trial.domain.entity.Product;
+import com.alten.product_trial.domain.repository.ProductRepository;
+import com.alten.product_trial.infra.product.service.ProductServiceImpl;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-@RequiredArgsConstructor
 public class ProductUseCaseTest {
 
-    @InjectMocks
-    private final ProductUseCase productUseCase;
+
+    private ProductUseCase productUseCase;
+
+    private ProductService productService;
 
     @Mock
-    private final ProductService productService;
+    private ProductRepository productRepository;
+
+    @BeforeEach
+    void setUp() {
+        // Use real service but with mocked repository
+        productService = new ProductServiceImpl(productRepository);
+        productUseCase = new ProductUseCase(productService);
+    }
 
     @Test
     void should_create_product() {
-        ProductDto productDto = createProductDto();
+        // given
+        CreationProduct product = CreationProductFactory(); // remplace ceci avec un objet concret si besoin
+        Product productBDD = createProduct();
+        when(productRepository.save(any())).thenReturn(productBDD);
 
-        when(productService.createProduct(productDto)).thenReturn(productDto);
+        // when
+        ProductDto result = productUseCase.createProduct(product);
 
-        ProductDto result = productUseCase.createProduct(productDto);
-
+        // then
         assertThat(result).isNotNull();
-        assertThat(productDto.getCode()).isEqualTo(result.getCode());
-        verify(productService).createProduct(productDto);
+        assertThat(result.getCode()).isEqualTo(product.getCode());
+        verify(productRepository).save(any(Product.class));
     }
 
     @Test
     void should_update_product() {
         ProductDto productDto = createProductDto();
         UUID uuid = UUID.fromString("6877fdd0-2790-8013-9237-1a8812354678");
+        Product productBDD = createProduct();
 
-        when(productService.updateProduct(any(), eq(productDto))).thenReturn(productDto);
+        when(productRepository.getProductByUuid(uuid)).thenReturn(productBDD);
+        when(productRepository.save(any())).thenReturn(productBDD);
 
         ProductDto result = productUseCase.updateProduct(uuid, productDto);
 
         assertThat(productDto.getCode()).isEqualTo(result.getCode());
-        verify(productService).updateProduct(any(), eq(productDto));
+        verify(productRepository).save(productBDD);
     }
 
     @Test
     void should_delete_product() {
         UUID uuid = UUID.fromString("6877fdd0-2790-8013-9237-1a8812354678");
+        Product productBDD = createProduct();
 
-        doNothing().when(productService).deleteProduct(any());
+        when(productRepository.getProductByUuid(uuid)).thenReturn(productBDD);
 
         assertDoesNotThrow(() -> productUseCase.deleteProduct(uuid));
-        verify(productService).deleteProduct(any());
+        verify(productRepository).delete(productBDD);
     }
 
     @Test
     void should_get_product_by_uuid() {
-        ProductDto productDto = createProductDto();
         UUID uuid = UUID.fromString("6877fdd0-2790-8013-9237-1a8812354678");
+        Product productBDD = createProduct();
 
-        when(productService.getProductById(any())).thenReturn(productDto);
+        when(productRepository.getProductByUuid(uuid)).thenReturn(productBDD);
 
         ProductDto result = productUseCase.getProductByUuid(uuid);
 
         assertThat(result).isNotNull();
-        verify(productService).getProductById(any());
+        verify(productRepository).getProductByUuid(uuid);
     }
 
     @Test
     void should_get_all_products() {
-        ProductDto productDto = createProductDto();
+        Product productBDD = createProduct();
 
-        when(productService.getAllProducts()).thenReturn(List.of(productDto));
+        when(productRepository.findAll()).thenReturn(List.of(productBDD));
 
         List<ProductDto> result = productUseCase.getAllProducts();
 
         assertThat(result.size()).isEqualTo(1);
-        verify(productService).getAllProducts();
     }
 }

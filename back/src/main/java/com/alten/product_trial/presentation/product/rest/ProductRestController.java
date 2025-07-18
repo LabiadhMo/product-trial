@@ -1,6 +1,7 @@
 package com.alten.product_trial.presentation.product.rest;
 
 import com.alten.product_trial.application.product.mapper.ProductDtoMapper;
+import com.alten.product_trial.application.product.model.CreationProduct;
 import com.alten.product_trial.application.product.model.ProductDto;
 import com.alten.product_trial.application.product.usecase.ProductUseCase;
 import com.alten.product_trial.presentation.product.mapper.ProductVmMapper;
@@ -43,8 +44,8 @@ public class ProductRestController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductVM> createProduct(@Valid @RequestBody ProductVM productVM) {
-        ProductDto created = productUseCase.createProduct(ProductDtoMapper.toDto(productVM));
+    public ResponseEntity<ProductVM> createProduct(@Valid @RequestBody CreationProduct product) {
+        ProductDto created = productUseCase.createProduct(product);
         return ResponseEntity.status(201).body(ProductVmMapper.toViewModel(created));
     }
 
