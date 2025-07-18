@@ -24,7 +24,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.GenerationTime;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "products")
@@ -39,7 +41,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "uuid", columnDefinition = "char(36)", nullable = false, updatable = false, unique = true)
+    @Column(name = "uuid", nullable = false, updatable = false, unique = true)
     private UUID uuid;
 
     @NotBlank
