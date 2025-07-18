@@ -1,0 +1,43 @@
+services:
+  db:
+    container_name: alten-db
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    volumes:
+      - ./db/:/dbscript
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${databasePassword}
+    ports:
+      - ${databasePort}:1433
+    networks:
+      alten-network:
+        ipv4_address: ${databaseUrl}
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+  db_init:
+    image: mcr.microsoft.com/mssql-tools
+    container_name: alten-init-db
+    command: bash -c "
+      /opt/mssql-tools/bin/sqlcmd -S ${databaseUrl} -U 'sa' -d 'master' -P ${saDatabasePassword} -Q \"CREATE DATABASE ${databaseName};\"
+      && /opt/mssql-tools/bin/sqlcmd -S ${databaseUrl} -U 'sa' -d '${databaseName}' -P ${saDatabasePassword} -Q \"CREATE LOGIN ${databaseUser} WITH PASSWORD = '${databasePassword}';CREATE USER ${databaseUser} FOR LOGIN ${databaseUser};GRANT control ON DATABASE::${databaseName} TO ${databaseUser};\"
+      "
+    networks:
+      alten-network:
+        ipv4_address: ${ipBDDTools}
+    restart: on-failure:5
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+networks:
+  alten-network:
+    driver: bridge
+    name: alten-network
+    ipam:
+      driver: default
+      config:
+        - subnet: ${networkSubnet}
